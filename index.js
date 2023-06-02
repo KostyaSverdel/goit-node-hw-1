@@ -1,53 +1,37 @@
-const yargs = require("yargs");
-const contacts = require("./contacts");
+const argv = require("yargs").argv;
 
-const { argv } = yargs
-  .command({
-    command: "list",
-    describe: "List all contacts",
-    handler: () => {
-      contacts.listContacts();
-    },
-  })
-  .command({
-    command: "get <id>",
-    describe: "Get contact by ID",
-    handler: (argv) => {
-      contacts.getContactById(argv.id);
-    },
-  })
-  .command({
-    command: "add <name> <email> <phone>",
-    describe: "Add a new contact",
-    handler: (argv) => {
-      contacts.addContact(argv.name, argv.email, argv.phone);
-    },
-  })
-  .command({
-    command: "remove <id>",
-    describe: "Remove contact by ID",
-    handler: (argv) => {
-      contacts.removeContact(argv.id);
-    },
-  })
-  .demandCommand()
-  .help();
+const {
+  listContacts,
+  getContactById,
+  removeContact,
+  addContact,
+} = require("./contacts.js");
 
-function invokeAction(argv) {
-  const { _: [action] } = argv;
+async function invokeAction({ action, id, name, email, phone }) {
   switch (action) {
     case "list":
-      contacts.listContacts();
+      list = await listContacts();
+      if (!list) return console.log("contacts not found");
+      console.table(list);
       break;
+
     case "get":
-      contacts.getContactById(argv.id);
+      const contactId = await getContactById(id);
+      if (!contactId) return console.log("contact not found");
+      console.log("contact: ", contactId);
       break;
+
     case "add":
-      contacts.addContact(argv.name, argv.email, argv.phone);
+      const contact = await addContact(name, email, phone);
+      console.log("contact added:", contact);
       break;
+
     case "remove":
-      contacts.removeContact(argv.id);
+      const deletedContact = await removeContact(id);
+      if (!deletedContact) return console.log("contact not found");
+      console.log("this contact was remove: ", deletedContact);
       break;
+
     default:
       console.warn("\x1B[31m Unknown action type!");
   }
